@@ -2,8 +2,9 @@
   "name": "local-dev-scratch",
   "private": true,
   "scripts": {
-    "test": "ava",
-    "lint:fix": "eslint --cache --fix index.js"
+    "test": "jest",
+    "lint": "eslint --cache index.js __tests__",
+    "lint:fix": "yarn run lint --fix"
   },
   "dependencies": {
     "bunyan": "^1.8.12",
@@ -17,8 +18,9 @@
     "extends": "nth"
   },
   "devDependencies": {
-    "ava": "^1.2.0",
-    "eslint": "^5.13.0",
-    "eslint-config-nth": "^1.0.2"
+    "eslint": "^6.8.0",
+    "eslint-config-nth": "^1.0.2",
+    "eslint-plugin-jest": "^23.8.2",
+    "jest": "^25.2.0"
   }
 }
