@@ -1,5 +1,5 @@
 {
-  "name": "local-dev-scratch",
+  "name": "git-find-merge-conflict-culprit",
   "private": true,
   "scripts": {
     "test": "jest",
