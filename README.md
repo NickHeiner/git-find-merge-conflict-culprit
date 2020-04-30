@@ -1,1 +1,1 @@
-# Local Dev Scratch
+# Git Find Merge Conflict Culprit

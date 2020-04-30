@@ -8,7 +8,8 @@
   },
   "dependencies": {
     "bunyan": "^1.8.12",
-    "bunyan-format": "^0.2.1"
+    "bunyan-format": "^0.2.1",
+    "yargs": "^15.3.1"
   },
   "eslintConfig": {
     "env": {
@@ -16,6 +17,17 @@
       "node": true
     },
     "extends": "nth"
+  },
+  "keywords": [
+    "git",
+    "cli"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NickHeiner/git-find-merge-conflict-culprit.git"
+  },
+  "bin": {
+    "git-find-merge-conflict-culprit": "./index.js"
   },
   "devDependencies": {
     "eslint": "^6.8.0",
