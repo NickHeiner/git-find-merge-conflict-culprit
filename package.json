@@ -9,12 +9,17 @@
   "dependencies": {
     "bunyan": "^1.8.12",
     "bunyan-format": "^0.2.1",
-    "execa": "^4.0.0"
+    "execa": "^4.0.0",
+    "hard-rejection": "^2.1.0",
+    "p-props": "^4.0.0"
   },
   "eslintConfig": {
     "env": {
       "es6": true,
       "node": true
+    },
+    "rules": {
+      "no-console": "off"
     },
     "extends": "nth"
   },
