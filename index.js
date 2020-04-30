@@ -56,12 +56,15 @@ async function main() {
     .value());
 
   console.log('Git XX status code is <us><them>');
-  _.forEach(culpritCommits, ({conflicts, email, subject}, culprit) => {
-    console.log(`${chalk.cyan(culprit)} ${chalk.green(email)} ${chalk.red(subject)}`);
-    conflicts.forEach(({filePath, modificationCode}) => {
-      console.log(`\t* ${chalk.magenta(modificationCode)} ${chalk.yellow(filePath)}`);
+  _(culpritCommits)
+    .toPairs()
+    .sortBy(0)
+    .forEach(([culprit, {conflicts, email, subject}]) => {
+      console.log(`${chalk.cyan(culprit)} ${chalk.green(email)} ${chalk.red(subject)}`);
+      conflicts.forEach(({filePath, modificationCode}) => {
+        console.log(`\t* ${chalk.magenta(modificationCode)} ${chalk.yellow(filePath)}`);
+      });
     });
-  });
 }
 
 main();
