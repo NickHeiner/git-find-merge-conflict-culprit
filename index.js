@@ -25,7 +25,7 @@ async function main() {
     .filter(({modificationCode}) => modificationCode.length === 2)
     .map(async conflictedFile => {
       const culpritStdout = await execGit(
-        'log', 'master', '--format=%H', `${mergeBase}..origin/master`, '--', conflictedFile.filePath);
+        'log', 'master', '--format=%h', `${mergeBase}..origin/master`, '--', conflictedFile.filePath);
 
       if (!culpritStdout) {
         return null;
@@ -38,6 +38,11 @@ async function main() {
         culprits
       };
     })));
+
+  const getOtherCulprits = (filePath, currentCulprit) => _.without(
+    _(conflicts).find({filePath}).culprits,
+    currentCulprit
+  );
 
   const culpritCommits = await pProps(_(conflicts)
     .map(({culprits, ...rest}) => culprits.map(culprit => ({culprit, ...rest})))
@@ -62,7 +67,11 @@ async function main() {
     .forEach(([culprit, {conflicts, email, subject}]) => {
       console.log(`${chalk.cyan(culprit)} ${chalk.green(email)} ${chalk.red(subject)}`);
       conflicts.forEach(({filePath, modificationCode}) => {
-        console.log(`\t* ${chalk.magenta(modificationCode)} ${chalk.yellow(filePath)}`);
+        const otherCulprits = getOtherCulprits(filePath, culprit);
+        const otherCulpritMessage = otherCulprits.length 
+          ? ` (Also modified on ${otherCulprits.map(culprit => chalk.cyan(culprit)).join(', ')}.)`
+          : '';
+        console.log(`\t* ${chalk.magenta(modificationCode)} ${chalk.yellow(filePath)}${otherCulpritMessage}`);
       });
     });
 }
