@@ -16,10 +16,18 @@ async function main() {
   const currentRef = await execGit('rev-parse', '--abbrev-ref', 'HEAD');
   const mergeBase = await execGit('merge-base', currentRef, 'master');
 
-  const conflicts = _.compact(await Promise.all(status
+  const conflicts = _.compact(await Promise.all(_(status)
     .split('\n')
+    .reject(line => line.startsWith('??'))
     .map(line => {
-      const [, modificationCode, filePath] = lineRegex.exec(line);
+      const match = lineRegex.exec(line);
+      if (!match) {
+        const err = new Error(`A line from "git status --porcelain" didn't match the line-parsing regex: "${line}"`);
+        Object.assign(err, {line, lineRegex});
+        throw err;
+      }
+
+      const [, modificationCode, filePath] = match;
       return {modificationCode, filePath};
     })
     .filter(({modificationCode}) => modificationCode.length === 2)
@@ -37,7 +45,8 @@ async function main() {
         ...conflictedFile,
         culprits
       };
-    })));
+    })
+    .value()));
 
   const getOtherCulprits = (filePath, currentCulprit) => _.without(
     _(conflicts).find({filePath}).culprits,
