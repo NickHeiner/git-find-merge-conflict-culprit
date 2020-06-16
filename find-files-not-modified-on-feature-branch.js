@@ -2,16 +2,18 @@
 
 const execa = require('execa');
 const _ = require('lodash');
-const pProps = require('p-props');
 const pLimit = require('p-limit');
-const chalk = require('chalk');
 const Progress = require('progress');
 const yargs = require('yargs');
 const os = require('os');
+const log = require('nth-log');
 
 require('hard-rejection/register');
 
-const execGit = async (...args) => (await execa('git', args)).stdout;
+const execGit = async (...args) => {
+  log.debug({args}, 'Spawning git');
+  return (await execa('git', args)).stdout;
+};
 
 async function main() {
   const {argv} = yargs
@@ -25,31 +27,46 @@ async function main() {
     })
     .option('concurrentGitProcesses', {
       describe: 'The number of concurrent git processes that will be run.',
-      default: os.cpus().length - 2
+      default: os.cpus().length - 1
     })
     .option('excludeCommits', {
       describe: 'When looking for commits on the compare branch and not the base branch, ' +
         'ignore these commits from the base branch. You may use this if you have automated transformations, like a ' +
         "codemod, on the compare branch, but you don't want to consider those as changes for the purpose of " +
         'this search.',
+      default: [],
       type: 'array'
     });
-    
-  const trackedFiles = (await execGit('ls-tree', '-r', 'master', '--name-only')).split('\n');
-    
-  const progressBar = new Progress(':bar (:percent)', {total: trackedFiles.length});
-  const promiseLimit = pLimit(argv.concurrentGitProcesses);
-  const commitFilePairs = await Promise.all(trackedFiles.map(async filePath => {
-    progressBar.tick();
-    const compareBranchCommits = (promiseLimit(await execGit(
-      'log', '--format=%H', '--no-merges', argv.compareBranch, `^${argv.baseBranch}`, '--', filePath
-    ))).split('\n');
-    const commitsToReport = _.difference(compareBranchCommits, argv.excludeCommits);
-    return [filePath, commitsToReport];
-  }))
 
-  const filesNotModifiedOnFeatureBranch = _.filter(commitFilePairs, ([, commitsToReport]) => commitsToReport.length);
-  filesNotModifiedOnFeatureBranch.forEach(file => console.log(file));
+  const promiseLimit = pLimit(argv.concurrentGitProcesses);
+    
+  const trackedFiles = (await promiseLimit(() => execGit('ls-tree', '-r', 'master', '--name-only'))).split('\n');
+  const excludeCommitFullHashes = 
+    await Promise.all(argv.excludeCommits.map(hash => promiseLimit(() => execGit('rev-parse', hash))));
+
+  log.debug({..._.pick(argv, 'excludeCommits'), excludeCommitFullHashes}, 'Expanded exclude commit short hashes.');
+
+  const progressBar = new Progress(':bar (:percent)', {total: trackedFiles.length});
+  const commitFilePairs = await Promise.all(trackedFiles.map(async filePath => {
+    const compareBranchCommits = (await (promiseLimit(() => {
+      progressBar.tick();
+      return execGit('log', '--format=%H', '--no-merges', argv.compareBranch, `^${argv.baseBranch}`, '--', filePath);
+    }))).split('\n');
+    const commitsToReport = _(compareBranchCommits)
+      .difference(excludeCommitFullHashes)
+      .compact()
+      .value();
+    return [filePath, commitsToReport];
+  }));
+
+  const filesNotModifiedOnCompareBranch = _.filter(commitFilePairs, ([, commitsToReport]) => commitsToReport.length);
+
+  log.info({
+    countTrackedFiles: trackedFiles.length,
+    countFilesNotModifiedOnCompareBranch: filesNotModifiedOnCompareBranch.length
+  }, 'Complete.');
+
+  filesNotModifiedOnCompareBranch.forEach(([file, commits]) => log.info({file, commits}));
 }
 
 main();

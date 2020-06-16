@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "test": "jest",
-    "lint": "eslint --cache index.js __tests__",
+    "lint": "eslint --cache *.js __tests__",
     "lint:fix": "yarn run lint --fix"
   },
   "dependencies": {
@@ -11,8 +11,10 @@
     "bunyan-format": "^0.2.1",
     "execa": "^4.0.0",
     "hard-rejection": "^2.1.0",
+    "nth-log": "^1.0.0",
     "p-limit": "^3.0.1",
     "p-props": "^4.0.0",
+    "p-throttle": "^3.1.0",
     "progress": "^2.0.3",
     "yargs": "^15.3.1"
   },
