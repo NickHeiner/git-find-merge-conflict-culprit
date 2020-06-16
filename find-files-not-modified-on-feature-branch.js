@@ -11,7 +11,7 @@ const log = require('nth-log');
 require('hard-rejection/register');
 
 const execGit = async (...args) => {
-  log.debug({args}, 'Spawning git');
+  log.trace({args}, 'Spawning git');
   return (await execa('git', args)).stdout;
 };
 
@@ -36,6 +36,12 @@ async function main() {
         'this search.',
       default: [],
       type: 'array'
+    })
+    .option('bareOutput', {
+      describe: 'Output a newline-separated list of files. Useful for scripting. ' +
+        'You probably want to use this in conjunction with env var loglevel=warn.',
+      default: false,
+      type: 'boolean'
     });
 
   const promiseLimit = pLimit(argv.concurrentGitProcesses);
@@ -59,14 +65,18 @@ async function main() {
     return [filePath, commitsToReport];
   }));
 
-  const filesNotModifiedOnCompareBranch = _.filter(commitFilePairs, ([, commitsToReport]) => commitsToReport.length);
+  const filesNotModifiedOnCompareBranch = _.reject(commitFilePairs, ([, commitsToReport]) => commitsToReport.length);
 
   log.info({
     countTrackedFiles: trackedFiles.length,
     countFilesNotModifiedOnCompareBranch: filesNotModifiedOnCompareBranch.length
   }, 'Complete.');
 
-  filesNotModifiedOnCompareBranch.forEach(([file, commits]) => log.info({file, commits}));
+  filesNotModifiedOnCompareBranch.forEach(([file, commits]) => log.debug({file, commits}));
+
+  if (argv.bareOutput) {
+    filesNotModifiedOnCompareBranch.map(([file]) => file).forEach(file => console.log(file));
+  }
 }
 
 main();
