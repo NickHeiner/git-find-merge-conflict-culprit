@@ -42,18 +42,26 @@ async function main() {
         'You probably want to use this in conjunction with env var loglevel=warn.',
       default: false,
       type: 'boolean'
+    })
+    .option('dry', {
+      describe: 'Log plan without taking action.',
+      default: true,
+      type: 'boolean'
     });
 
   const promiseLimit = pLimit(argv.concurrentGitProcesses);
     
-  const trackedFiles = (await promiseLimit(() => execGit('ls-tree', '-r', 'master', '--name-only'))).split('\n');
+  const differentFiles = (await execGit('diff', `${argv.baseBranch}..${argv.compareBranch}`, '--name-only')).split('\n');
   const excludeCommitFullHashes = 
     await Promise.all(argv.excludeCommits.map(hash => promiseLimit(() => execGit('rev-parse', hash))));
 
   log.debug({..._.pick(argv, 'excludeCommits'), excludeCommitFullHashes}, 'Expanded exclude commit short hashes.');
 
-  const progressBar = new Progress(':bar (:percent)', {total: trackedFiles.length});
-  const commitFilePairs = await Promise.all(trackedFiles.map(async filePath => {
+  // This will look a bit funny when it updates, because it doesn't update at a constant interval. (It updates
+  // whenever a new git process is spawned.)
+  const progressBar = new Progress(':elapseds :bar (:current/:total | :percent)', {total: differentFiles.length});
+
+  const commitFilePairs = await Promise.all(differentFiles.map(async filePath => {
     const compareBranchCommits = (await (promiseLimit(() => {
       progressBar.tick();
       return execGit('log', '--format=%H', '--no-merges', argv.compareBranch, `^${argv.baseBranch}`, '--', filePath);
@@ -65,18 +73,39 @@ async function main() {
     return [filePath, commitsToReport];
   }));
 
-  const filesNotModifiedOnCompareBranch = _.reject(commitFilePairs, ([, commitsToReport]) => commitsToReport.length);
+  const filesNotModifiedOnCompareBranch = _.reject(commitFilePairs, ([, commitsToReport]) => commitsToReport.length)
+    .map(([file]) => file);
+
+  const baseFiles = (await execGit('ls-tree', '-r', '--name-only', argv.baseBranch)).split('\n');
+
+  const filesThatOnlyExistOnCompareBranchButWereNotModifiedThere = 
+    _.difference(filesNotModifiedOnCompareBranch, baseFiles);
+
+  const filesThatAlsoExistOnBaseBranch = _.intersection(filesNotModifiedOnCompareBranch, baseFiles);
 
   log.info({
-    countTrackedFiles: trackedFiles.length,
-    countFilesNotModifiedOnCompareBranch: filesNotModifiedOnCompareBranch.length
-  }, 'Complete.');
+    toDelete: filesThatOnlyExistOnCompareBranchButWereNotModifiedThere,
+    toDeleteCount: filesThatOnlyExistOnCompareBranchButWereNotModifiedThere.length,
+    toCheckOut: filesThatAlsoExistOnBaseBranch,
+    toCheckOutCount: filesThatAlsoExistOnBaseBranch.length
+  });
 
-  filesNotModifiedOnCompareBranch.forEach(([file, commits]) => log.debug({file, commits}));
-
-  if (argv.bareOutput) {
-    filesNotModifiedOnCompareBranch.map(([file]) => file).forEach(file => console.log(file));
+  if (argv.dry) {
+    log.warn('Not modifying the local directory. Pass `--dry false` to modify.');
+  } else {
+    await execGit('checkout', argv.baseBranch, '--', ...filesThatAlsoExistOnBaseBranch);
+    await execGit('rm', ...filesThatOnlyExistOnCompareBranchButWereNotModifiedThere);
   }
+
+  // if (argv.bareOutput) {
+  //   filesNotModifiedOnCompareBranch.forEach(file => console.log(file.replace(' ', '\ ')));
+  // } else {
+  //   log.info({
+  //     countTrackedFiles: differentFiles.length,
+  //     countFilesNotModifiedOnCompareBranch: filesNotModifiedOnCompareBranch.length,
+  //     filesNotModifiedOnCompareBranch
+  //   }, 'Complete.');
+  // }
 }
 
 main();
