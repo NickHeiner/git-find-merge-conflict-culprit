@@ -15,6 +15,13 @@ const execGit = async (...args) => {
   return (await execa('git', args)).stdout;
 };
 
+/**
+ * Sometimes, when doing a merge commit, I'd do the migration as part of the merge commit. That'll produce changes
+ * we want to keep around. However, this tool will not consider those commits to be a sign that the file is
+ * legitimately modified on the feature-branch. That means that this tool is overzealous in how many files it tries
+ * to reset to the base branch.
+ */
+
 async function main() {
   const {argv} = yargs
     .option('baseBranch', {
