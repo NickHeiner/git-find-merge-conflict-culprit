@@ -50,8 +50,10 @@ async function main() {
     });
 
   const promiseLimit = pLimit(argv.concurrentGitProcesses);
+
+  const mergeBase = await execGit('merge-base', argv.baseBranch, argv.compareBranch);
     
-  const differentFiles = (await execGit('diff', `${argv.baseBranch}..${argv.compareBranch}`, '--name-only')).split('\n');
+  const differentFiles = (await execGit('diff', `${mergeBase}..${argv.compareBranch}`, '--name-only')).split('\n');
   const excludeCommitFullHashes = 
     await Promise.all(argv.excludeCommits.map(hash => promiseLimit(() => execGit('rev-parse', hash))));
 
@@ -64,7 +66,7 @@ async function main() {
   const commitFilePairs = await Promise.all(differentFiles.map(async filePath => {
     const compareBranchCommits = (await (promiseLimit(() => {
       progressBar.tick();
-      return execGit('log', '--format=%H', '--no-merges', argv.compareBranch, `^${argv.baseBranch}`, '--', filePath);
+      return execGit('log', '--format=%H', '--no-merges', argv.compareBranch, `^${mergeBase}`, '--', filePath);
     }))).split('\n');
     const commitsToReport = _(compareBranchCommits)
       .difference(excludeCommitFullHashes)
@@ -76,7 +78,7 @@ async function main() {
   const filesNotModifiedOnCompareBranch = _.reject(commitFilePairs, ([, commitsToReport]) => commitsToReport.length)
     .map(([file]) => file);
 
-  const baseFiles = (await execGit('ls-tree', '-r', '--name-only', argv.baseBranch)).split('\n');
+  const baseFiles = (await execGit('ls-tree', '-r', '--name-only', mergeBase)).split('\n');
 
   const filesThatOnlyExistOnCompareBranchButWereNotModifiedThere = 
     _.difference(filesNotModifiedOnCompareBranch, baseFiles);
@@ -93,7 +95,7 @@ async function main() {
   if (argv.dry) {
     log.warn('Not modifying the local directory. Pass `--dry false` to modify.');
   } else {
-    await execGit('checkout', argv.baseBranch, '--', ...filesThatAlsoExistOnBaseBranch);
+    await execGit('checkout', mergeBase, '--', ...filesThatAlsoExistOnBaseBranch);
     await execGit('rm', ...filesThatOnlyExistOnCompareBranchButWereNotModifiedThere);
   }
 
