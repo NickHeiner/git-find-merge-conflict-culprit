@@ -20,6 +20,14 @@ const execGit = async (...args) => {
  * we want to keep around. However, this tool will not consider those commits to be a sign that the file is
  * legitimately modified on the feature-branch. That means that this tool is overzealous in how many files it tries
  * to reset to the base branch.
+ * 
+ * Git seems to use --name-status = "D" when a file was renamed, under certain circumstances. I'm not sure this tool
+ * handles that case properly.
+ * 
+ * If there are commits that you wanted to exclude but failed to do, then it's a real pain to go back and re-exclude 
+ * them. Make it easier to verify that all the commits you want to exclude are excluded.
+ * 
+ * I think I'm also observing this changing files too eagerly.
  */
 
 async function main() {
@@ -59,7 +67,9 @@ async function main() {
   const promiseLimit = pLimit(argv.concurrentGitProcesses);
 
   const mergeBase = await execGit('merge-base', argv.baseBranch, argv.compareBranch);
-    
+
+  // This may omit files that appear only in `mergeBase`.
+  // We may want to use `baseFiles` here instead, for a more exhaustive search.
   const differentFiles = (await execGit('diff', `${mergeBase}..${argv.compareBranch}`, '--name-only')).split('\n');
   const excludeCommitFullHashes = 
     await Promise.all(argv.excludeCommits.map(hash => promiseLimit(() => execGit('rev-parse', hash))));
@@ -85,6 +95,7 @@ async function main() {
   const filesNotModifiedOnCompareBranch = _.reject(commitFilePairs, ([, commitsToReport]) => commitsToReport.length)
     .map(([file]) => file);
 
+  // Using `--name-status` with the diff between compare and base could be a better alternative here.
   const baseFiles = (await execGit('ls-tree', '-r', '--name-only', mergeBase)).split('\n');
 
   const filesThatOnlyExistOnCompareBranchButWereNotModifiedThere = 
