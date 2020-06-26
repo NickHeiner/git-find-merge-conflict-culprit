@@ -1,13 +1,30 @@
 #! /usr/bin/env node
 
+const fs = require('fs');
 const execa = require('execa');
 const _ = require('lodash');
 const pProps = require('p-props');
 const chalk = require('chalk');
+const findUp = require('find-up');
+const path = require('path');
 
 require('hard-rejection/register');
 
 const execGit = async (...args) => (await execa('git', args)).stdout;
+
+const getMergeHead = async () => {
+  const gitDir = await findUp('.git', {type: 'directory'});
+  const mergeHeadPath = path.join(gitDir, 'MERGE_HEAD');
+  try {
+    return fs.readFileSync(mergeHeadPath, 'utf-8').trim();
+  } catch (e) {
+    if (e.code === 'ENOENT') {
+      console.log(`There is no merge in progress, because "${mergeHeadPath}" is missing.`);
+      return;
+    }
+    throw e;
+  }
+}
 
 async function main() {
   const status = await execGit('status', '--porcelain');
@@ -15,6 +32,10 @@ async function main() {
 
   const currentRef = await execGit('rev-parse', '--abbrev-ref', 'HEAD');
   const mergeBase = await execGit('merge-base', currentRef, 'master');
+  const mergeHead = await getMergeHead();
+  if (!mergeHead) {
+    process.exit(1);
+  }
 
   const conflicts = _.compact(await Promise.all(_(status)
     .split('\n')
@@ -33,7 +54,7 @@ async function main() {
     .filter(({modificationCode}) => modificationCode.length === 2)
     .map(async conflictedFile => {
       const culpritStdout = await execGit(
-        'log', 'master', '--format=%h', `${mergeBase}..origin/master`, '--', conflictedFile.filePath);
+        'log', '--format=%h', `${mergeBase}..${mergeHead}`, '--', conflictedFile.filePath);
 
       if (!culpritStdout) {
         return null;
@@ -59,11 +80,12 @@ async function main() {
     .groupBy('culprit')
     .mapValues(async (conflicts, culprit) => {
       const separator = '|';
-      const culpritStdout = await execGit('show', culprit, '--quiet', `--format=%ce${separator}%s`);
-      const [email, subject] = culpritStdout.split(separator);
+      const culpritStdout = await execGit('show', culprit, '--quiet', `--format=%ce${separator}%s${separator}%ad`);
+      const [email, subject, date] = culpritStdout.split(separator);
       return {
         email, 
         subject,
+        date,
         conflicts
       };
     })
@@ -72,9 +94,10 @@ async function main() {
   console.log('Git XX status code is <us><them>');
   _(culpritCommits)
     .toPairs()
-    .sortBy(0)
-    .forEach(([culprit, {conflicts, email, subject}]) => {
-      console.log(`${chalk.cyan(culprit)} ${chalk.green(email)} ${chalk.red(subject)}`);
+    .sortBy(([, {date}]) => date)
+    .reverse()
+    .forEach(([culprit, {conflicts, email, subject, date}]) => {
+      console.log(`${chalk.cyan(culprit)} ${chalk.green(email)} ${chalk.red(subject)} ${date}`);
       conflicts.forEach(({filePath, modificationCode}) => {
         const otherCulprits = getOtherCulprits(filePath, culprit);
         const otherCulpritMessage = otherCulprits.length 
