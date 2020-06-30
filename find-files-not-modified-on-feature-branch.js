@@ -32,6 +32,7 @@ const execGit = async (...args) => {
 
 async function main() {
   const {argv} = yargs
+    .strict()
     .option('baseBranch', {
       describe: 'You are looking for files that were only modified on this branch.',
       default: 'master'
@@ -52,11 +53,13 @@ async function main() {
       default: [],
       type: 'array'
     })
-    .option('bareOutput', {
-      describe: 'Output a newline-separated list of files. Useful for scripting. ' +
-        'You probably want to use this in conjunction with env var loglevel=warn.',
-      default: false,
-      type: 'boolean'
+    .option('excludeFiles', {
+      describe: 'Never change these files. ' +
+      // This rule is too broad.
+      // eslint-disable-next-line quotes
+        `Use this option to filter out false positives, where the tool resets the file to "baseBranch", but shouldn't.`,
+      default: [],
+      type: 'array'
     })
     .option('dry', {
       describe: 'Log plan without taking action.',
@@ -68,19 +71,21 @@ async function main() {
 
   const mergeBase = await execGit('merge-base', argv.baseBranch, argv.compareBranch);
 
-  // This may omit files that appear only in `mergeBase`.
-  // We may want to use `baseFiles` here instead, for a more exhaustive search.
-  const differentFiles = (await execGit('diff', `${mergeBase}..${argv.compareBranch}`, '--name-only')).split('\n');
   const excludeCommitFullHashes = 
     await Promise.all(argv.excludeCommits.map(hash => promiseLimit(() => execGit('rev-parse', hash))));
 
   log.debug({..._.pick(argv, 'excludeCommits'), excludeCommitFullHashes}, 'Expanded exclude commit short hashes.');
 
+  // This may omit files that appear only in `mergeBase`.
+  // We may want to use `baseFiles` here instead, for a more exhaustive search.
+  const differentFiles = (await execGit('diff', `${mergeBase}..${argv.compareBranch}`, '--name-only')).split('\n');
+  const filesToCheck = _.difference(differentFiles, argv.excludeFiles);
+
   // This will look a bit funny when it updates, because it doesn't update at a constant interval. (It updates
   // whenever a new git process is spawned.)
-  const progressBar = new Progress(':elapseds :bar (:current/:total | :percent)', {total: differentFiles.length});
+  const progressBar = new Progress(':elapseds :bar (:current/:total | :percent)', {total: filesToCheck.length});
 
-  const commitFilePairs = await Promise.all(differentFiles.map(async filePath => {
+  const commitFilePairs = await Promise.all(filesToCheck.map(async filePath => {
     const compareBranchCommits = (await (promiseLimit(() => {
       progressBar.tick();
       return execGit('log', '--format=%H', '--no-merges', argv.compareBranch, `^${mergeBase}`, '--', filePath);
@@ -89,6 +94,9 @@ async function main() {
       .difference(excludeCommitFullHashes)
       .compact()
       .value();
+
+    log.trace({filePath, commitsToReport});
+    
     return [filePath, commitsToReport];
   }));
 
@@ -116,16 +124,6 @@ async function main() {
     await execGit('checkout', mergeBase, '--', ...filesThatAlsoExistOnBaseBranch);
     await execGit('rm', ...filesThatOnlyExistOnCompareBranchButWereNotModifiedThere);
   }
-
-  // if (argv.bareOutput) {
-  //   filesNotModifiedOnCompareBranch.forEach(file => console.log(file.replace(' ', '\ ')));
-  // } else {
-  //   log.info({
-  //     countTrackedFiles: differentFiles.length,
-  //     countFilesNotModifiedOnCompareBranch: filesNotModifiedOnCompareBranch.length,
-  //     filesNotModifiedOnCompareBranch
-  //   }, 'Complete.');
-  // }
 }
 
 main();
