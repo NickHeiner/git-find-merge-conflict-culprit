@@ -1,0 +1,3 @@
+to rename but should stay with the original name on compare
+
+Modified on compare

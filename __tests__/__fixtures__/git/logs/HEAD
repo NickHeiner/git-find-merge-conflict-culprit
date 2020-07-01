@@ -1,0 +1,43 @@
+0000000000000000000000000000000000000000 e3e13108026a73a63dfd4bc422179928fb8d3b67 Nick Heiner <nheiner@netflix.com> 1593636373 -0700	commit (initial): Adding first file
+e3e13108026a73a63dfd4bc422179928fb8d3b67 0000000000000000000000000000000000000000 Nick Heiner <nheiner@netflix.com> 1593636509 -0700	Branch: renamed refs/heads/master to refs/heads/base
+0000000000000000000000000000000000000000 e3e13108026a73a63dfd4bc422179928fb8d3b67 Nick Heiner <nheiner@netflix.com> 1593636509 -0700	Branch: renamed refs/heads/master to refs/heads/base
+e3e13108026a73a63dfd4bc422179928fb8d3b67 69308ead58378aa6f05f657ff761cab96c855ed6 Nick Heiner <nheiner@netflix.com> 1593636583 -0700	commit: Adding initial files
+69308ead58378aa6f05f657ff761cab96c855ed6 69308ead58378aa6f05f657ff761cab96c855ed6 Nick Heiner <nheiner@netflix.com> 1593636639 -0700	checkout: moving from base to compare
+69308ead58378aa6f05f657ff761cab96c855ed6 69308ead58378aa6f05f657ff761cab96c855ed6 Nick Heiner <nheiner@netflix.com> 1593636653 -0700	checkout: moving from compare to base
+69308ead58378aa6f05f657ff761cab96c855ed6 7a49a5ac16e3d02c4998e4253cf19c3239e41acc Nick Heiner <nheiner@netflix.com> 1593636767 -0700	commit (amend): Adding initial files
+7a49a5ac16e3d02c4998e4253cf19c3239e41acc 7a49a5ac16e3d02c4998e4253cf19c3239e41acc Nick Heiner <nheiner@netflix.com> 1593636786 -0700	checkout: moving from base to compare
+7a49a5ac16e3d02c4998e4253cf19c3239e41acc 7a49a5ac16e3d02c4998e4253cf19c3239e41acc Nick Heiner <nheiner@netflix.com> 1593636793 -0700	checkout: moving from compare to base
+7a49a5ac16e3d02c4998e4253cf19c3239e41acc 3c5e433acc7adcdc8d86172c760bd105684888b8 Nick Heiner <nheiner@netflix.com> 1593636826 -0700	commit: Add new file
+3c5e433acc7adcdc8d86172c760bd105684888b8 7a49a5ac16e3d02c4998e4253cf19c3239e41acc Nick Heiner <nheiner@netflix.com> 1593636830 -0700	checkout: moving from base to compare
+7a49a5ac16e3d02c4998e4253cf19c3239e41acc 3c5e433acc7adcdc8d86172c760bd105684888b8 Nick Heiner <nheiner@netflix.com> 1593636869 -0700	checkout: moving from compare to base
+3c5e433acc7adcdc8d86172c760bd105684888b8 7a49a5ac16e3d02c4998e4253cf19c3239e41acc Nick Heiner <nheiner@netflix.com> 1593636874 -0700	reset: moving to head~1
+7a49a5ac16e3d02c4998e4253cf19c3239e41acc 874875d3e809c1d3c9fa541c2e59652756a496a6 Nick Heiner <nheiner@netflix.com> 1593636910 -0700	commit: Making changes
+874875d3e809c1d3c9fa541c2e59652756a496a6 5da3bc820ba4962a1ba05445636ef213b361772e Nick Heiner <nheiner@netflix.com> 1593636920 -0700	commit (amend): Modifying each file as it was supposed to be modified
+5da3bc820ba4962a1ba05445636ef213b361772e 7a49a5ac16e3d02c4998e4253cf19c3239e41acc Nick Heiner <nheiner@netflix.com> 1593636922 -0700	checkout: moving from base to compare
+7a49a5ac16e3d02c4998e4253cf19c3239e41acc d53b65cbb9cb309958abd0007d2644626a5ccbd0 Nick Heiner <nheiner@netflix.com> 1593636951 -0700	commit: Making change on compare so it diverges from base
+d53b65cbb9cb309958abd0007d2644626a5ccbd0 d53b65cbb9cb309958abd0007d2644626a5ccbd0 Nick Heiner <nheiner@netflix.com> 1593637024 -0700	reset: moving to HEAD
+d53b65cbb9cb309958abd0007d2644626a5ccbd0 3edd20dca67fc3893dbce7b0538841e6626de117 Nick Heiner <nheiner@netflix.com> 1593637061 -0700	commit (merge): Merge base in to compare
+3edd20dca67fc3893dbce7b0538841e6626de117 5da3bc820ba4962a1ba05445636ef213b361772e Nick Heiner <nheiner@netflix.com> 1593637408 -0700	checkout: moving from compare to base
+5da3bc820ba4962a1ba05445636ef213b361772e 7a49a5ac16e3d02c4998e4253cf19c3239e41acc Nick Heiner <nheiner@netflix.com> 1593637425 -0700	reset: moving to head~1
+7a49a5ac16e3d02c4998e4253cf19c3239e41acc 5cc9fbe7391648182f3188fab1b6c9c04da29b58 Nick Heiner <nheiner@netflix.com> 1593637481 -0700	commit (amend): Adding initial files
+5cc9fbe7391648182f3188fab1b6c9c04da29b58 542e9e8d662595f7677610a303aa8833768e98ed Nick Heiner <nheiner@netflix.com> 1593637491 -0700	cherry-pick: Modifying each file as it was supposed to be modified
+542e9e8d662595f7677610a303aa8833768e98ed 3edd20dca67fc3893dbce7b0538841e6626de117 Nick Heiner <nheiner@netflix.com> 1593637499 -0700	checkout: moving from base to compare
+3edd20dca67fc3893dbce7b0538841e6626de117 542e9e8d662595f7677610a303aa8833768e98ed Nick Heiner <nheiner@netflix.com> 1593637502 -0700	rebase (start): checkout base
+542e9e8d662595f7677610a303aa8833768e98ed 3a7fb72f35d31a2581354789c65659bb0ae7b23f Nick Heiner <nheiner@netflix.com> 1593637502 -0700	rebase (pick): Making change on compare so it diverges from base
+3a7fb72f35d31a2581354789c65659bb0ae7b23f 3a7fb72f35d31a2581354789c65659bb0ae7b23f Nick Heiner <nheiner@netflix.com> 1593637502 -0700	rebase (finish): returning to refs/heads/compare
+3a7fb72f35d31a2581354789c65659bb0ae7b23f 542e9e8d662595f7677610a303aa8833768e98ed Nick Heiner <nheiner@netflix.com> 1593637557 -0700	checkout: moving from compare to base
+542e9e8d662595f7677610a303aa8833768e98ed 5cc9fbe7391648182f3188fab1b6c9c04da29b58 Nick Heiner <nheiner@netflix.com> 1593637562 -0700	reset: moving to head~1
+5cc9fbe7391648182f3188fab1b6c9c04da29b58 c9b4b79ee49fe0a14a234d869e041d60dc07434f Nick Heiner <nheiner@netflix.com> 1593637568 -0700	commit (amend): Adding initial files
+c9b4b79ee49fe0a14a234d869e041d60dc07434f 10d6f14cb2a6b83d248d46016a9e970543f92b55 Nick Heiner <nheiner@netflix.com> 1593637572 -0700	cherry-pick: Modifying each file as it was supposed to be modified
+10d6f14cb2a6b83d248d46016a9e970543f92b55 3a7fb72f35d31a2581354789c65659bb0ae7b23f Nick Heiner <nheiner@netflix.com> 1593637577 -0700	checkout: moving from base to compare
+3a7fb72f35d31a2581354789c65659bb0ae7b23f 10d6f14cb2a6b83d248d46016a9e970543f92b55 Nick Heiner <nheiner@netflix.com> 1593637580 -0700	rebase (start): checkout base
+10d6f14cb2a6b83d248d46016a9e970543f92b55 3a7fb72f35d31a2581354789c65659bb0ae7b23f Nick Heiner <nheiner@netflix.com> 1593637597 -0700	rebase (abort): updating HEAD
+3a7fb72f35d31a2581354789c65659bb0ae7b23f 10d6f14cb2a6b83d248d46016a9e970543f92b55 Nick Heiner <nheiner@netflix.com> 1593637609 -0700	checkout: moving from compare to base
+10d6f14cb2a6b83d248d46016a9e970543f92b55 c9b4b79ee49fe0a14a234d869e041d60dc07434f Nick Heiner <nheiner@netflix.com> 1593637624 -0700	checkout: moving from base to head~1
+c9b4b79ee49fe0a14a234d869e041d60dc07434f c9b4b79ee49fe0a14a234d869e041d60dc07434f Nick Heiner <nheiner@netflix.com> 1593637626 -0700	checkout: moving from c9b4b79ee49fe0a14a234d869e041d60dc07434f to compare
+c9b4b79ee49fe0a14a234d869e041d60dc07434f c2d28f7a8c470e9c072a7b6e119950ab6b411cfc Nick Heiner <nheiner@netflix.com> 1593637630 -0700	cherry-pick: Making change on compare so it diverges from base
+c2d28f7a8c470e9c072a7b6e119950ab6b411cfc 83e7d47dc285e7dd6bebbd32259ab74b60847aae Nick Heiner <nheiner@netflix.com> 1593637652 -0700	commit: Modifying file that will be renamed on base
+83e7d47dc285e7dd6bebbd32259ab74b60847aae 10d6f14cb2a6b83d248d46016a9e970543f92b55 Nick Heiner <nheiner@netflix.com> 1593637664 -0700	checkout: moving from compare to base
+10d6f14cb2a6b83d248d46016a9e970543f92b55 1b6445c9c4ac1ee010560f9be2a0ee059eac09fc Nick Heiner <nheiner@netflix.com> 1593637687 -0700	commit (amend): Modifying each file as it was supposed to be modified
+1b6445c9c4ac1ee010560f9be2a0ee059eac09fc 83e7d47dc285e7dd6bebbd32259ab74b60847aae Nick Heiner <nheiner@netflix.com> 1593637711 -0700	checkout: moving from base to compare
+83e7d47dc285e7dd6bebbd32259ab74b60847aae 16506ab1d8cd10283f8e0a31da74e886fc60243e Nick Heiner <nheiner@netflix.com> 1593638008 -0700	merge base: Merge made by the 'ours' strategy.
