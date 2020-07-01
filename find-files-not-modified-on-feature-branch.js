@@ -3,6 +3,7 @@
 const _ = require('lodash');
 const pLimit = require('p-limit');
 const pSeries = require('p-series');
+const pFilter = require('p-filter');
 const Progress = require('progress');
 const yargs = require('yargs');
 const os = require('os');
@@ -119,14 +120,16 @@ async function main() {
   const filesNotModifiedOnCompareBranch = _.difference(erroneouslyModifiedFiles, files.removed);
   const filesThatOnlyExistOnCompareBranchButWereNotModifiedThere = 
     _.intersection(erroneouslyModifiedFiles, files.removed);
+
+  const toMove = await findErroneouslyRenamedFiles();
   
   log.info({
     toDelete: filesThatOnlyExistOnCompareBranchButWereNotModifiedThere,
     toDeleteCount: filesThatOnlyExistOnCompareBranchButWereNotModifiedThere.length,
     toCheckOut: filesNotModifiedOnCompareBranch,
     toCheckOutCount: filesNotModifiedOnCompareBranch.length,
-    toMove: files.fullyRenamed,
-    toMoveCount: files.fullyRenamed.length
+    toMove,
+    toMoveCount: toMove.length
   });
 
   if (argv.dry) {
@@ -138,7 +141,7 @@ async function main() {
     if (filesThatOnlyExistOnCompareBranchButWereNotModifiedThere.length) {
       await execGit('rm', ...filesThatOnlyExistOnCompareBranchButWereNotModifiedThere);
     }
-    await pSeries(files.fullyRenamed.map(({nameOnBase, nameOnCompare}) => async () => {
+    await pSeries(toMove.map(({nameOnBase, nameOnCompare}) => async () => {
       await makeDir(path.dirname(nameOnBase));
       return execGit('mv', nameOnCompare, nameOnBase);
     }));
@@ -150,25 +153,35 @@ async function main() {
     // whenever a new git process is spawned.)
     const progressBar = new Progress(':elapseds :bar (:current/:total | :percent)', {total: filesToCheck.length});
   
-    const commitFilePairs = await Promise.all(filesToCheck.map(async filePath => {
-      const compareBranchCommits = (await (promiseLimit(() => {
-        progressBar.tick();
-        // This will sometimes erroneously return no output. I believe it's related to interactive v. non-interactive
-        // mode. If you execute this command on the shell, you'll get output. If you do `command | cat`, you won't.
-        return execGit('log', '--format=%H', '--no-merges', argv.compareBranch, `^${mergeBase}`, '--', filePath);
-      }))).split('\n');
-      const commitsToReport = _(compareBranchCommits)
-        .difference(excludeCommitFullHashes)
-        .compact()
-        .value();
-  
-      log.trace({filePath, commitsToReport, compareBranchCommits});
-      
-      return [filePath, commitsToReport];
+    const checkedFiles = await Promise.all(filesToCheck.map(async filePath => {
+      const fileShouldBeDifferent = await shouldFileBeDifferentOnCompareBranch(filePath, () => progressBar.tick());
+      return fileShouldBeDifferent ? null : filePath;
     }));
-  
-    return _.reject(commitFilePairs, ([, commitsToReport]) => commitsToReport.length)
-      .map(([file]) => file);
+
+    return _.compact(checkedFiles);
+  }
+
+  function findErroneouslyRenamedFiles() {
+    return pFilter(
+      files.fullyRenamed, 
+      async ({nameOnCompare}) => !await shouldFileBeDifferentOnCompareBranch(nameOnCompare)
+    );
+  }
+
+  async function shouldFileBeDifferentOnCompareBranch(filePath, tick = () => {}) {
+    const compareBranchCommits = (await (promiseLimit(() => {
+      tick();
+      // This will sometimes erroneously return no output. I believe it's related to interactive v. non-interactive
+      // mode. If you execute this command on the shell, you'll get output. If you do `command | cat`, you won't.
+      return execGit('log', '--format=%H', '--no-merges', argv.compareBranch, `^${mergeBase}`, '--', filePath);
+    }))).split('\n');
+    const commitsJustifyingThisFileChange = _(compareBranchCommits)
+      .difference(excludeCommitFullHashes)
+      .compact()
+      .value();
+
+    log.trace({filePath, commitsJustifyingThisFileChange, compareBranchCommits});
+    return Boolean(commitsJustifyingThisFileChange.length);
   }
 }
 
