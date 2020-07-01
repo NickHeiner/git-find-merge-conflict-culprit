@@ -32,7 +32,17 @@ const execGit = (...args) => execaWithLogging('git', args, 'trace');
  * If there are commits that you wanted to exclude but failed to do, then it's a real pain to go back and re-exclude 
  * them. Make it easier to verify that all the commits you want to exclude are excluded.
  * 
+ * 
  * I think I'm also observing this changing files too eagerly.
+ * 
+ * This will delete files too eagerly. This happens when you have:
+ *  A, changed in compare: require('./b') 
+ *  B, deleted in base and unchanged in compare
+ * 
+ * B will be deleted, because it looks like it's present erroneously. However, it is still required by A. Base doesn't
+ * have this problem, because in base, A does not require B. 
+ * 
+ * I believe the only solution to this is to manually exclude the files.
  */
 
 async function main() {
@@ -93,10 +103,6 @@ async function main() {
   log.debug({..._.pick(argv, 'excludeCommits'), excludeCommitFullHashes}, 'Expanded exclude commit short hashes.');
 
   // We want to use --name-status instead of --name-only. Renamed files won't appear in --name-only.
-  // This also makes the entire script much faster. The long poll is calling `log` on every changed file. 
-  // With --name-only, we have to call `log` on more files, because --name-status tells us which files were modified,
-  // whereas --name-only lists all files that were added/removed/modified/etc. In my current runs, this means that we're
-  // running `log` on 50% as many files.
   const files = parseNameStatus(
     // We want it to be compare..mergeBase, because if a file was deleted in compare, we want it to show up in the diff
     // as `added`, because then the rest of this code reads better. 
@@ -109,11 +115,11 @@ async function main() {
     return;
   }
 
-  const filesNotModifiedOnCompareBranch = await findErroneouslyModifiedFiles();
-
+  const erroneouslyModifiedFiles = await findErroneouslyModifiedFiles();
+  const filesNotModifiedOnCompareBranch = _.difference(erroneouslyModifiedFiles, files.removed);
   const filesThatOnlyExistOnCompareBranchButWereNotModifiedThere = 
-    _.intersection(filesNotModifiedOnCompareBranch, files.removed);
-
+    _.intersection(erroneouslyModifiedFiles, files.removed);
+  
   log.info({
     toDelete: filesThatOnlyExistOnCompareBranchButWereNotModifiedThere,
     toDeleteCount: filesThatOnlyExistOnCompareBranchButWereNotModifiedThere.length,
@@ -126,9 +132,8 @@ async function main() {
   if (argv.dry) {
     log.warn('Not modifying the local directory. Pass `--dry false` to modify.');
   } else {
-    const toCheckOut = [...filesNotModifiedOnCompareBranch, ...files.added];
-    if (toCheckOut.length) {
-      await execGit('checkout', mergeBase, '--', ...toCheckOut);
+    if (filesNotModifiedOnCompareBranch.length) {
+      await execGit('checkout', mergeBase, '--', ...filesNotModifiedOnCompareBranch);
     }
     if (filesThatOnlyExistOnCompareBranchButWereNotModifiedThere.length) {
       await execGit('rm', ...filesThatOnlyExistOnCompareBranchButWereNotModifiedThere);
@@ -140,11 +145,12 @@ async function main() {
   }
 
   async function findErroneouslyModifiedFiles() {
+    const filesToCheck = [...files.modified, ...files.removed, ...files.added];
     // This will look a bit funny when it updates, because it doesn't update at a constant interval. (It updates
     // whenever a new git process is spawned.)
-    const progressBar = new Progress(':elapseds :bar (:current/:total | :percent)', {total: files.modified.length});
+    const progressBar = new Progress(':elapseds :bar (:current/:total | :percent)', {total: filesToCheck.length});
   
-    const commitFilePairs = await Promise.all(files.modified.map(async filePath => {
+    const commitFilePairs = await Promise.all(filesToCheck.map(async filePath => {
       const compareBranchCommits = (await (promiseLimit(() => {
         progressBar.tick();
         // This will sometimes erroneously return no output. I believe it's related to interactive v. non-interactive
