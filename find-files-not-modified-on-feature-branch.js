@@ -107,8 +107,10 @@ async function main() {
 
   log.debug({..._.pick(argv, 'excludeCommits'), excludeCommitFullHashes}, 'Expanded exclude commit short hashes.');
 
-  // This may omit files that appear only in `mergeBase`.
-  // We may want to use `baseFiles` here instead, for a more exhaustive search.
+  // We want to use --name-status instead of --name-only. Renamed files won't appear in --name-only.
+  // This also makes the entire script much faster. The long poll is calling `log` on every changed file. 
+  // With --name-only, we have to call `log` on more files, because --name-status tells us which files were modified,
+  // whereas --name-only lists all files that were added/removed/modified/etc.
   const files = parseNameStatus(
     // We want it to be compare..mergeBase, because if a file was deleted in compare, we want it to show up in the diff
     // as `added`, because then the rest of this code reads better. 
@@ -121,7 +123,7 @@ async function main() {
     return;
   }
 
-  const filesNotModifiedOnCompareBranch = findErroneouslyModifiedFiles();
+  const filesNotModifiedOnCompareBranch = await findErroneouslyModifiedFiles();
 
   const filesThatOnlyExistOnCompareBranchButWereNotModifiedThere = 
     _.intersection(filesNotModifiedOnCompareBranch, files.removed);
@@ -130,7 +132,9 @@ async function main() {
     toDelete: filesThatOnlyExistOnCompareBranchButWereNotModifiedThere,
     toDeleteCount: filesThatOnlyExistOnCompareBranchButWereNotModifiedThere.length,
     toCheckOut: filesNotModifiedOnCompareBranch,
-    toCheckOutCount: filesNotModifiedOnCompareBranch.length
+    toCheckOutCount: filesNotModifiedOnCompareBranch.length,
+    toMove: files.fullyRenamed,
+    toMoveCount: files.fullyRenamed.length
   });
 
   if (argv.dry) {
@@ -138,11 +142,12 @@ async function main() {
   } else {
     const toCheckOut = [...filesNotModifiedOnCompareBranch, ...files.added];
     if (toCheckOut.length) {
-      await execGit('checkout', mergeBase, '--', toCheckOut);
+      await execGit('checkout', mergeBase, '--', ...toCheckOut);
     }
     if (filesThatOnlyExistOnCompareBranchButWereNotModifiedThere.length) {
       await execGit('rm', ...filesThatOnlyExistOnCompareBranchButWereNotModifiedThere);
     }
+    await Promise.all(files.fullyRenamed.map(({nameOnBase, nameOnCompare}) => execa('mv', nameOnCompare, nameOnBase)));
   }
 
   async function findErroneouslyModifiedFiles() {
@@ -173,16 +178,43 @@ async function main() {
 }
 
 function parseNameStatus(nameStatusOutputLines, {includeFiles, excludeFiles}) {
+  const lineRegex = /([A-Z][0-9]*)\s+(.*)/;
+
   const parsed = _(nameStatusOutputLines)
-    .map(line => line.split(/\s/))
+    .map(line => {
+      const match = lineRegex.exec(line);
+      log.warn({match});
+      if (!match) {
+        const err = new Error(`A line of git output didn't match the line-parsing regex: "${line}"`);
+        Object.assign(err, {line, lineRegex});
+        throw err;
+      }
+      const [, modificationCode, restOfLine] = match;
+      if (modificationCode.startsWith('R')) {
+        return [modificationCode, ...restOfLine.split(' ')];
+      }
+      return [modificationCode, restOfLine];
+    })
     .groupBy(([status]) => status)
-    .mapValues(pairs => pairs.map(([, filePath]) => filePath))
-    // .mapValues(files => 
-    //   _(files).intersection(includeFiles).difference(excludeFiles).value()
-    // )
+    .mapValues((pairs, status) => pairs.map(line => {
+      const fileNames = line.slice(1);
+      if ((includeFiles && !_.intersection(fileNames, includeFiles).length) || 
+          _.intersection(fileNames, excludeFiles).length) {
+        return null;
+      }
+      if (status === 'R100') {
+        return {
+          // This ordering is dependent on us passing "base..compare" to git diff above, as opposed to "compare..base".
+          nameOnBase: line[1], 
+          nameOnCompare: line[2] 
+        };
+      }
+      return fileNames;
+    }))
+    .mapValues(files => _.compact(files))
     .value();
 
-  const knownKeys = ['A', 'D', 'M'];
+  const knownKeys = ['A', 'D', 'M', 'R100'];
   const unknownKeys = _.difference(Object.keys(parsed), knownKeys);
   if (unknownKeys.length) {
     throw new Error(
@@ -193,7 +225,8 @@ function parseNameStatus(nameStatusOutputLines, {includeFiles, excludeFiles}) {
   return {
     added: parsed.A || [],
     removed: parsed.D || [],
-    modified: parsed.M || []
+    modified: parsed.M || [],
+    fullyRenamed: parsed.R100 || []
   };
 }
 
