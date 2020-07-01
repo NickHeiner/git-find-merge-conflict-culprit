@@ -24,7 +24,7 @@ const getMergeHead = async () => {
     }
     throw e;
   }
-}
+};
 
 async function main() {
   const status = await execGit('status', '--porcelain');

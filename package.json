@@ -11,9 +11,11 @@
     "bunyan-format": "^0.2.1",
     "execa": "^4.0.0",
     "hard-rejection": "^2.1.0",
-    "nth-log": "^1.0.0",
+    "make-dir": "^3.1.0",
+    "nth-log": "^1.1.0",
     "p-limit": "^3.0.1",
     "p-props": "^4.0.0",
+    "p-series": "^2.1.0",
     "p-throttle": "^3.1.0",
     "progress": "^2.0.3",
     "yargs": "^15.3.1"
@@ -25,7 +27,12 @@
     },
     "rules": {
       "no-console": "off",
-      "no-use-before-define": ["warn", {"functions": false}]
+      "no-use-before-define": [
+        "warn",
+        {
+          "functions": false
+        }
+      ]
     },
     "extends": "nth"
   },

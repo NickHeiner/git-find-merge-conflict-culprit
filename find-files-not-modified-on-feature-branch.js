@@ -2,48 +2,32 @@
 
 const _ = require('lodash');
 const pLimit = require('p-limit');
+const pSeries = require('p-series');
 const Progress = require('progress');
 const yargs = require('yargs');
 const os = require('os');
 const log = require('nth-log');
-
+const path = require('path');
+const makeDir = require('make-dir');
 const execa = require('execa');
-// const childProcess = require('child_process');
-// const execa = (command, args) => new Promise((resolve, reject) => {
-//   childProcess.exec(`${command} ${args.join(' ')}`, (error, stdout, stderr) => {
-//     if (error) {
-//       console.log({error});
-//       return reject(error);
-//     }
-//     resolve({stdout: stdout.trim(), stderr: stderr.trim()});
-//   })
-// });
 
 require('hard-rejection/register');
 
-const execGitWithLogging = (args, {quiet}) => {
-  return log.logStep(
-    {args: args.join(' '), step: 'spawning git', level: 'trace'}, 
-    async (logProgress, updateLogMetadata) => {
-      const process = await execa('git', args);
-      if (!quiet) {
-        updateLogMetadata(_.pick(process, 'stdout', 'stderr', 'code'))
-      }
-      return process.stdout;
-    });
-};
+const execaWithLogging = (command, args, level = 'trace') => log.logStep(
+  {args: args.join(' '), step: `spawning ${command}`, level}, 
+  async (logProgress, updateLogMetadata) => {
+    const process = await execa(command, args);
+    updateLogMetadata(_.pick(process, 'stdout', 'stderr', 'code'));
+    return process.stdout;
+  });
 
-const execGitQuiet = (...args) => execGitWithLogging(args, {quiet: true});
-const execGit = (...args) => execGitWithLogging(args, {quiet: false});
+const execGit = (...args) => execaWithLogging('git', args, 'trace');
 
 /**
  * Sometimes, when doing a merge commit, I'd do the migration as part of the merge commit. That'll produce changes
  * we want to keep around. However, this tool will not consider those commits to be a sign that the file is
  * legitimately modified on the feature-branch. That means that this tool is overzealous in how many files it tries
  * to reset to the base branch.
- * 
- * Git seems to use --name-status = "D" when a file was renamed, under certain circumstances. I'm not sure this tool
- * handles that case properly.
  * 
  * If there are commits that you wanted to exclude but failed to do, then it's a real pain to go back and re-exclude 
  * them. Make it easier to verify that all the commits you want to exclude are excluded.
@@ -54,6 +38,7 @@ const execGit = (...args) => execGitWithLogging(args, {quiet: false});
 async function main() {
   const {argv} = yargs
     .strict()
+    // Base and Compare may be misleading names.
     .option('baseBranch', {
       describe: 'You are looking for files that were only modified on this branch.',
       default: 'master'
@@ -110,7 +95,8 @@ async function main() {
   // We want to use --name-status instead of --name-only. Renamed files won't appear in --name-only.
   // This also makes the entire script much faster. The long poll is calling `log` on every changed file. 
   // With --name-only, we have to call `log` on more files, because --name-status tells us which files were modified,
-  // whereas --name-only lists all files that were added/removed/modified/etc.
+  // whereas --name-only lists all files that were added/removed/modified/etc. In my current runs, this means that we're
+  // running `log` on 50% as many files.
   const files = parseNameStatus(
     // We want it to be compare..mergeBase, because if a file was deleted in compare, we want it to show up in the diff
     // as `added`, because then the rest of this code reads better. 
@@ -147,7 +133,10 @@ async function main() {
     if (filesThatOnlyExistOnCompareBranchButWereNotModifiedThere.length) {
       await execGit('rm', ...filesThatOnlyExistOnCompareBranchButWereNotModifiedThere);
     }
-    await Promise.all(files.fullyRenamed.map(({nameOnBase, nameOnCompare}) => execa('mv', nameOnCompare, nameOnBase)));
+    await pSeries(files.fullyRenamed.map(({nameOnBase, nameOnCompare}) => async () => {
+      await makeDir(path.dirname(nameOnBase));
+      return execGit('mv', nameOnCompare, nameOnBase);
+    }));
   }
 
   async function findErroneouslyModifiedFiles() {
@@ -178,25 +167,10 @@ async function main() {
 }
 
 function parseNameStatus(nameStatusOutputLines, {includeFiles, excludeFiles}) {
-  const lineRegex = /([A-Z][0-9]*)\s+(.*)/;
-
   const parsed = _(nameStatusOutputLines)
-    .map(line => {
-      const match = lineRegex.exec(line);
-      log.warn({match});
-      if (!match) {
-        const err = new Error(`A line of git output didn't match the line-parsing regex: "${line}"`);
-        Object.assign(err, {line, lineRegex});
-        throw err;
-      }
-      const [, modificationCode, restOfLine] = match;
-      if (modificationCode.startsWith('R')) {
-        return [modificationCode, ...restOfLine.split(' ')];
-      }
-      return [modificationCode, restOfLine];
-    })
+    .map(line => line.split('\t'))
     .groupBy(([status]) => status)
-    .mapValues((pairs, status) => pairs.map(line => {
+    .mapValues((pairs, status) => pairs.flatMap(line => {
       const fileNames = line.slice(1);
       if ((includeFiles && !_.intersection(fileNames, includeFiles).length) || 
           _.intersection(fileNames, excludeFiles).length) {
@@ -205,8 +179,8 @@ function parseNameStatus(nameStatusOutputLines, {includeFiles, excludeFiles}) {
       if (status === 'R100') {
         return {
           // This ordering is dependent on us passing "base..compare" to git diff above, as opposed to "compare..base".
-          nameOnBase: line[1], 
-          nameOnCompare: line[2] 
+          nameOnBase: line[2], 
+          nameOnCompare: line[1] 
         };
       }
       return fileNames;

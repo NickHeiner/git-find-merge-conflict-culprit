@@ -397,6 +397,11 @@
     "@types/yargs" "^15.0.0"
     chalk "^3.0.0"
 
+"@sindresorhus/is@^0.15.0":
+  version "0.15.0"
+  resolved "https://artifacts.netflix.net/api/npm/npm-netflix/@sindresorhus/is/-/is-0.15.0.tgz#96915baa05e6a6a1d137badf4984d3fc05820bb6"
+  integrity sha1-lpFbqgXmpqHRN7rfSYTT/AWCC7Y=
+
 "@sinonjs/commons@^1.7.0":
   version "1.7.1"
   resolved "https://artifacts.netflix.net/api/npm/npm-netflix/@sinonjs/commons/-/commons-1.7.1.tgz#da5fd19a5f71177a53778073978873964f49acf1"
@@ -2845,6 +2850,13 @@ make-dir@^3.0.0:
   dependencies:
     semver "^6.0.0"
 
+make-dir@^3.1.0:
+  version "3.1.0"
+  resolved "https://artifacts.netflix.net/api/npm/npm-netflix/make-dir/-/make-dir-3.1.0.tgz#415e967046b3a7f1d185277d84aa58203726a13f"
+  integrity sha1-QV6WcEazp/HRhSd9hKpYIDcmoT8=
+  dependencies:
+    semver "^6.0.0"
+
 makeerror@1.0.x:
   version "1.0.11"
   resolved "https://artifacts.netflix.net/api/npm/npm-netflix/makeerror/-/makeerror-1.0.11.tgz#e01a5c9109f2af79660e4e8b9587790184f5a96c"
@@ -3068,10 +3080,10 @@ npm-run-path@^4.0.0:
   dependencies:
     path-key "^3.0.0"
 
-nth-log@^1.0.0:
-  version "1.0.0"
-  resolved "https://artifacts.netflix.net/api/npm/npm-netflix/nth-log/-/nth-log-1.0.0.tgz#a46461c01272871b361ba439c32931979ef043e5"
-  integrity sha1-pGRhwBJyhxs2G6Q5wykxl57wQ+U=
+nth-log@^1.1.0:
+  version "1.1.0"
+  resolved "https://artifacts.netflix.net/api/npm/npm-netflix/nth-log/-/nth-log-1.1.0.tgz#519c34b40abe5566f1868aaea550b6c49c8ee406"
+  integrity sha1-UZw0tAq+VWbxhoqupVC2xJyO5AY=
   dependencies:
     bunyan "^1.8.12"
     bunyan-format "^0.2.1"
@@ -3230,6 +3242,19 @@ p-props@^4.0.0:
   integrity sha1-83yHeppyIFeDPh3DjUPt85BrNDc=
   dependencies:
     p-map "^4.0.0"
+
+p-reduce@^2.1.0:
+  version "2.1.0"
+  resolved "https://artifacts.netflix.net/api/npm/npm-netflix/p-reduce/-/p-reduce-2.1.0.tgz#09408da49507c6c274faa31f28df334bc712b64a"
+  integrity sha1-CUCNpJUHxsJ0+qMfKN8zS8cStko=
+
+p-series@^2.1.0:
+  version "2.1.0"
+  resolved "https://artifacts.netflix.net/api/npm/npm-netflix/p-series/-/p-series-2.1.0.tgz#7035b3a81e2644d4ba407c1ebbc21776e353fa29"
+  integrity sha1-cDWzqB4mRNS6QHweu8IXduNT+ik=
+  dependencies:
+    "@sindresorhus/is" "^0.15.0"
+    p-reduce "^2.1.0"
 
 p-throttle@^3.1.0:
   version "3.1.0"
