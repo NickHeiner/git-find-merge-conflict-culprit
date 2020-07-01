@@ -87,6 +87,11 @@ async function main() {
       default: [],
       type: 'array'
     })
+    .option('logFilesToCheckAndStop', {
+      describe: 'Log files to check, then stop. Implies `dry`.',
+      default: false,
+      type: 'boolean'
+    })
     .option('dry', {
       describe: 'Log plan without taking action.',
       default: true,
@@ -104,57 +109,92 @@ async function main() {
 
   // This may omit files that appear only in `mergeBase`.
   // We may want to use `baseFiles` here instead, for a more exhaustive search.
-  const differentFiles = argv.includeFiles || 
-    (await execGit('diff', `${mergeBase}..${argv.compareBranch}`, '--name-only')).split('\n');
-  const filesToCheck = _.difference(differentFiles, argv.excludeFiles);
+  const files = parseNameStatus(
+    // We want it to be compare..mergeBase, because if a file was deleted in compare, we want it to show up in the diff
+    // as `added`, because then the rest of this code reads better. 
+    (await execGit('diff', `${argv.compareBranch}..${mergeBase}`, '--name-status')).split('\n'),
+    _.pick(argv, 'includeFiles', 'excludeFiles')
+  );
 
-  // This will look a bit funny when it updates, because it doesn't update at a constant interval. (It updates
-  // whenever a new git process is spawned.)
-  const progressBar = new Progress(':elapseds :bar (:current/:total | :percent)', {total: filesToCheck.length});
+  if (argv.logFilesToCheckAndStop) {
+    log.warn({files});
+    return;
+  }
 
-  const commitFilePairs = await Promise.all(filesToCheck.map(async filePath => {
-    const compareBranchCommits = (await (promiseLimit(() => {
-      progressBar.tick();
-      return execGit('log', '--format=%H', '--no-merges', argv.compareBranch, `^${mergeBase}`, '--', filePath);
-    }))).split('\n');
-    const commitsToReport = _(compareBranchCommits)
-      .difference(excludeCommitFullHashes)
-      .compact()
-      .value();
-
-    log.trace({filePath, commitsToReport, compareBranchCommits});
-    
-    return [filePath, commitsToReport];
-  }));
-
-  const filesNotModifiedOnCompareBranch = _.reject(commitFilePairs, ([, commitsToReport]) => commitsToReport.length)
-    .map(([file]) => file);
-
-  // Using `--name-status` with the diff between compare and base could be a better alternative here.
-  const baseFiles = (await execGitQuiet('ls-tree', '-r', '--name-only', mergeBase)).split('\n');
+  const filesNotModifiedOnCompareBranch = findErroneouslyModifiedFiles();
 
   const filesThatOnlyExistOnCompareBranchButWereNotModifiedThere = 
-    _.difference(filesNotModifiedOnCompareBranch, baseFiles);
-
-  const filesThatAlsoExistOnBaseBranch = _.intersection(filesNotModifiedOnCompareBranch, baseFiles);
+    _.intersection(filesNotModifiedOnCompareBranch, files.removed);
 
   log.info({
     toDelete: filesThatOnlyExistOnCompareBranchButWereNotModifiedThere,
     toDeleteCount: filesThatOnlyExistOnCompareBranchButWereNotModifiedThere.length,
-    toCheckOut: filesThatAlsoExistOnBaseBranch,
-    toCheckOutCount: filesThatAlsoExistOnBaseBranch.length
+    toCheckOut: filesNotModifiedOnCompareBranch,
+    toCheckOutCount: filesNotModifiedOnCompareBranch.length
   });
 
   if (argv.dry) {
     log.warn('Not modifying the local directory. Pass `--dry false` to modify.');
   } else {
-    if (filesThatAlsoExistOnBaseBranch.length) {
-      await execGit('checkout', mergeBase, '--', ...filesThatAlsoExistOnBaseBranch);
+    const toCheckOut = [...filesNotModifiedOnCompareBranch, ...files.added];
+    if (toCheckOut.length) {
+      await execGit('checkout', mergeBase, '--', toCheckOut);
     }
     if (filesThatOnlyExistOnCompareBranchButWereNotModifiedThere.length) {
       await execGit('rm', ...filesThatOnlyExistOnCompareBranchButWereNotModifiedThere);
     }
   }
+
+  async function findErroneouslyModifiedFiles() {
+    // This will look a bit funny when it updates, because it doesn't update at a constant interval. (It updates
+    // whenever a new git process is spawned.)
+    const progressBar = new Progress(':elapseds :bar (:current/:total | :percent)', {total: files.modified.length});
+  
+    const commitFilePairs = await Promise.all(files.modified.map(async filePath => {
+      const compareBranchCommits = (await (promiseLimit(() => {
+        progressBar.tick();
+        // This will sometimes erroneously return no output. I believe it's related to interactive v. non-interactive
+        // mode. If you execute this command on the shell, you'll get output. If you do `command | cat`, you won't.
+        return execGit('log', '--format=%H', '--no-merges', argv.compareBranch, `^${mergeBase}`, '--', filePath);
+      }))).split('\n');
+      const commitsToReport = _(compareBranchCommits)
+        .difference(excludeCommitFullHashes)
+        .compact()
+        .value();
+  
+      log.trace({filePath, commitsToReport, compareBranchCommits});
+      
+      return [filePath, commitsToReport];
+    }));
+  
+    return _.reject(commitFilePairs, ([, commitsToReport]) => commitsToReport.length)
+      .map(([file]) => file);
+  }
+}
+
+function parseNameStatus(nameStatusOutputLines, {includeFiles, excludeFiles}) {
+  const parsed = _(nameStatusOutputLines)
+    .map(line => line.split(/\s/))
+    .groupBy(([status]) => status)
+    .mapValues(pairs => pairs.map(([, filePath]) => filePath))
+    // .mapValues(files => 
+    //   _(files).intersection(includeFiles).difference(excludeFiles).value()
+    // )
+    .value();
+
+  const knownKeys = ['A', 'D', 'M'];
+  const unknownKeys = _.difference(Object.keys(parsed), knownKeys);
+  if (unknownKeys.length) {
+    throw new Error(
+      `Bug: parseNameStatus() saw one or more diff codes in --name-status that it did not recognize: ${unknownKeys}`
+    );
+  }
+
+  return {
+    added: parsed.A || [],
+    removed: parsed.D || [],
+    modified: parsed.M || []
+  };
 }
 
 main();
