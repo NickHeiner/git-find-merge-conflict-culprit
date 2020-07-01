@@ -11,6 +11,7 @@
     "bunyan-format": "^0.2.1",
     "execa": "^4.0.0",
     "hard-rejection": "^2.1.0",
+    "lodash": "^4.17.15",
     "make-dir": "^3.1.0",
     "nth-log": "^1.1.0",
     "p-filter": "^2.1.0",
@@ -50,9 +51,12 @@
     "git-find-files-not-modified-on-feature-branch": "./find-files-not-modified-on-feature-branch.js"
   },
   "devDependencies": {
+    "cpy": "^8.1.0",
     "eslint": "^6.8.0",
     "eslint-config-nth": "^1.0.2",
     "eslint-plugin-jest": "^23.8.2",
-    "jest": "^25.2.0"
+    "globby": "^11.0.1",
+    "jest": "^25.2.0",
+    "tempy": "^0.5.0"
   }
 }

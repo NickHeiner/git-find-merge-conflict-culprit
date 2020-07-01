@@ -1,0 +1,18 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`git-find-files-not-modified-on-feature-branch 1`] = `
+Object {
+  "added.txt": "new file
+",
+  "new-compare-file.txt": "new compare file
+",
+  "rename-on-base-but-not-compare.txt": "to rename but should stay with the original name on compare
+
+Modified on compare",
+  "renamed-on-base-but-not-compare.txt": "to rename but should stay with the original name on compare",
+  "renamed.txt": "To rename",
+  "to-leave-unchanged.txt": "To leave unchanged",
+  "to-modify.txt": "changed
+",
+}
+`;
