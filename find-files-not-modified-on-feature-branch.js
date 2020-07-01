@@ -1,6 +1,5 @@
 #! /usr/bin/env node
 
-const execa = require('execa');
 const _ = require('lodash');
 const pLimit = require('p-limit');
 const Progress = require('progress');
@@ -8,12 +7,34 @@ const yargs = require('yargs');
 const os = require('os');
 const log = require('nth-log');
 
+const execa = require('execa');
+// const childProcess = require('child_process');
+// const execa = (command, args) => new Promise((resolve, reject) => {
+//   childProcess.exec(`${command} ${args.join(' ')}`, (error, stdout, stderr) => {
+//     if (error) {
+//       console.log({error});
+//       return reject(error);
+//     }
+//     resolve({stdout: stdout.trim(), stderr: stderr.trim()});
+//   })
+// });
+
 require('hard-rejection/register');
 
-const execGit = async (...args) => {
-  log.trace({args}, 'Spawning git');
-  return (await execa('git', args)).stdout;
+const execGitWithLogging = (args, {quiet}) => {
+  return log.logStep(
+    {args: args.join(' '), step: 'spawning git', level: 'trace'}, 
+    async (logProgress, updateLogMetadata) => {
+      const process = await execa('git', args);
+      if (!quiet) {
+        updateLogMetadata(_.pick(process, 'stdout', 'stderr', 'code'))
+      }
+      return process.stdout;
+    });
 };
+
+const execGitQuiet = (...args) => execGitWithLogging(args, {quiet: true});
+const execGit = (...args) => execGitWithLogging(args, {quiet: false});
 
 /**
  * Sometimes, when doing a merge commit, I'd do the migration as part of the merge commit. That'll produce changes
@@ -53,6 +74,11 @@ async function main() {
       default: [],
       type: 'array'
     })
+    .option('includeFiles', {
+      describe: 'Only change files in this set. Combined with loglevel=trace, this can be helpful for debugging ' +
+        'why a specific file is modified or not.',
+      type: 'array'
+    })
     .option('excludeFiles', {
       describe: 'Never change these files. ' +
       // This rule is too broad.
@@ -78,7 +104,8 @@ async function main() {
 
   // This may omit files that appear only in `mergeBase`.
   // We may want to use `baseFiles` here instead, for a more exhaustive search.
-  const differentFiles = (await execGit('diff', `${mergeBase}..${argv.compareBranch}`, '--name-only')).split('\n');
+  const differentFiles = argv.includeFiles || 
+    (await execGit('diff', `${mergeBase}..${argv.compareBranch}`, '--name-only')).split('\n');
   const filesToCheck = _.difference(differentFiles, argv.excludeFiles);
 
   // This will look a bit funny when it updates, because it doesn't update at a constant interval. (It updates
@@ -95,7 +122,7 @@ async function main() {
       .compact()
       .value();
 
-    log.trace({filePath, commitsToReport});
+    log.trace({filePath, commitsToReport, compareBranchCommits});
     
     return [filePath, commitsToReport];
   }));
@@ -104,7 +131,7 @@ async function main() {
     .map(([file]) => file);
 
   // Using `--name-status` with the diff between compare and base could be a better alternative here.
-  const baseFiles = (await execGit('ls-tree', '-r', '--name-only', mergeBase)).split('\n');
+  const baseFiles = (await execGitQuiet('ls-tree', '-r', '--name-only', mergeBase)).split('\n');
 
   const filesThatOnlyExistOnCompareBranchButWereNotModifiedThere = 
     _.difference(filesNotModifiedOnCompareBranch, baseFiles);
@@ -121,8 +148,12 @@ async function main() {
   if (argv.dry) {
     log.warn('Not modifying the local directory. Pass `--dry false` to modify.');
   } else {
-    await execGit('checkout', mergeBase, '--', ...filesThatAlsoExistOnBaseBranch);
-    await execGit('rm', ...filesThatOnlyExistOnCompareBranchButWereNotModifiedThere);
+    if (filesThatAlsoExistOnBaseBranch.length) {
+      await execGit('checkout', mergeBase, '--', ...filesThatAlsoExistOnBaseBranch);
+    }
+    if (filesThatOnlyExistOnCompareBranchButWereNotModifiedThere.length) {
+      await execGit('rm', ...filesThatOnlyExistOnCompareBranchButWereNotModifiedThere);
+    }
   }
 }
 
