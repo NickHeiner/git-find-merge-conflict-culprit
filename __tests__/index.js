@@ -33,5 +33,9 @@ test('git-find-files-not-modified-on-feature-branch', async () => {
     .fromPairs()
     .value();
 
+  /**
+   * I don't think rename-on-base-but-not-compare.txt is getting handled right, but I'll leave it in the snapshot anyway
+   * for visibility into when it changes.
+   */
   expect(fileContents).toMatchSnapshot();
 });
