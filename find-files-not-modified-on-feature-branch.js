@@ -88,6 +88,12 @@ async function main() {
       default: false,
       type: 'boolean'
     })
+    .option('failIfThereAreChangesToMake', {
+      describe: 'If this finds sync errors, exit with a failed status code, ' +
+        'instead of making file system changes. Implies `dry`.',
+      default: false,
+      type: 'boolean'
+    })
     .option('dry', {
       describe: 'Log plan without taking action.',
       default: true,
@@ -132,6 +138,14 @@ async function main() {
     toMoveCount: toMove.length
   });
 
+  if (argv.failIfThereAreChangesToMake && (
+    filesNotModifiedOnCompareBranch.length || 
+      filesThatOnlyExistOnCompareBranchButWereNotModifiedThere.length || 
+      toMove.length)
+  ) {
+    process.exit(1);
+  }
+  
   if (argv.dry) {
     log.warn('Not modifying the local directory. Pass `--dry false` to modify.');
   } else {
