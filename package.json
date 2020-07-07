@@ -1,26 +1,62 @@
 {
-  "name": "local-dev-scratch",
+  "name": "git-find-merge-conflict-culprit",
   "private": true,
   "scripts": {
     "test": "jest",
-    "lint": "eslint --cache index.js __tests__",
+    "lint": "eslint --cache *.js __tests__",
     "lint:fix": "yarn run lint --fix"
   },
   "dependencies": {
     "bunyan": "^1.8.12",
-    "bunyan-format": "^0.2.1"
+    "bunyan-format": "^0.2.1",
+    "execa": "^4.0.0",
+    "hard-rejection": "^2.1.0",
+    "lodash": "^4.17.15",
+    "make-dir": "^3.1.0",
+    "nth-log": "^1.1.0",
+    "p-filter": "^2.1.0",
+    "p-limit": "^3.0.1",
+    "p-props": "^4.0.0",
+    "p-series": "^2.1.0",
+    "p-throttle": "^3.1.0",
+    "progress": "^2.0.3",
+    "yargs": "^15.3.1"
   },
   "eslintConfig": {
     "env": {
       "es6": true,
       "node": true
     },
+    "rules": {
+      "no-console": "off",
+      "no-use-before-define": [
+        "warn",
+        {
+          "functions": false
+        }
+      ]
+    },
     "extends": "nth"
   },
+  "keywords": [
+    "git",
+    "cli"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NickHeiner/git-find-merge-conflict-culprit.git"
+  },
+  "bin": {
+    "git-find-merge-conflict-culprit": "./index.js",
+    "git-find-files-not-modified-on-feature-branch": "./find-files-not-modified-on-feature-branch.js"
+  },
   "devDependencies": {
+    "cpy": "^8.1.0",
     "eslint": "^6.8.0",
     "eslint-config-nth": "^1.0.2",
     "eslint-plugin-jest": "^23.8.2",
-    "jest": "^25.2.0"
+    "globby": "^11.0.1",
+    "jest": "^25.2.0",
+    "tempy": "^0.5.0"
   }
 }

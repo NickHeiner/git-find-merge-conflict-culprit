@@ -1,0 +1,15 @@
+0000000000000000000000000000000000000000 e3e13108026a73a63dfd4bc422179928fb8d3b67 Nick Heiner <nheiner@netflix.com> 1593636373 -0700	commit (initial): Adding first file
+e3e13108026a73a63dfd4bc422179928fb8d3b67 e3e13108026a73a63dfd4bc422179928fb8d3b67 Nick Heiner <nheiner@netflix.com> 1593636509 -0700	Branch: renamed refs/heads/master to refs/heads/base
+e3e13108026a73a63dfd4bc422179928fb8d3b67 69308ead58378aa6f05f657ff761cab96c855ed6 Nick Heiner <nheiner@netflix.com> 1593636583 -0700	commit: Adding initial files
+69308ead58378aa6f05f657ff761cab96c855ed6 7a49a5ac16e3d02c4998e4253cf19c3239e41acc Nick Heiner <nheiner@netflix.com> 1593636767 -0700	commit (amend): Adding initial files
+7a49a5ac16e3d02c4998e4253cf19c3239e41acc 3c5e433acc7adcdc8d86172c760bd105684888b8 Nick Heiner <nheiner@netflix.com> 1593636826 -0700	commit: Add new file
+3c5e433acc7adcdc8d86172c760bd105684888b8 7a49a5ac16e3d02c4998e4253cf19c3239e41acc Nick Heiner <nheiner@netflix.com> 1593636874 -0700	reset: moving to head~1
+7a49a5ac16e3d02c4998e4253cf19c3239e41acc 874875d3e809c1d3c9fa541c2e59652756a496a6 Nick Heiner <nheiner@netflix.com> 1593636910 -0700	commit: Making changes
+874875d3e809c1d3c9fa541c2e59652756a496a6 5da3bc820ba4962a1ba05445636ef213b361772e Nick Heiner <nheiner@netflix.com> 1593636920 -0700	commit (amend): Modifying each file as it was supposed to be modified
+5da3bc820ba4962a1ba05445636ef213b361772e 7a49a5ac16e3d02c4998e4253cf19c3239e41acc Nick Heiner <nheiner@netflix.com> 1593637425 -0700	reset: moving to head~1
+7a49a5ac16e3d02c4998e4253cf19c3239e41acc 5cc9fbe7391648182f3188fab1b6c9c04da29b58 Nick Heiner <nheiner@netflix.com> 1593637481 -0700	commit (amend): Adding initial files
+5cc9fbe7391648182f3188fab1b6c9c04da29b58 542e9e8d662595f7677610a303aa8833768e98ed Nick Heiner <nheiner@netflix.com> 1593637491 -0700	cherry-pick: Modifying each file as it was supposed to be modified
+542e9e8d662595f7677610a303aa8833768e98ed 5cc9fbe7391648182f3188fab1b6c9c04da29b58 Nick Heiner <nheiner@netflix.com> 1593637562 -0700	reset: moving to head~1
+5cc9fbe7391648182f3188fab1b6c9c04da29b58 c9b4b79ee49fe0a14a234d869e041d60dc07434f Nick Heiner <nheiner@netflix.com> 1593637568 -0700	commit (amend): Adding initial files
+c9b4b79ee49fe0a14a234d869e041d60dc07434f 10d6f14cb2a6b83d248d46016a9e970543f92b55 Nick Heiner <nheiner@netflix.com> 1593637572 -0700	cherry-pick: Modifying each file as it was supposed to be modified
+10d6f14cb2a6b83d248d46016a9e970543f92b55 1b6445c9c4ac1ee010560f9be2a0ee059eac09fc Nick Heiner <nheiner@netflix.com> 1593637687 -0700	commit (amend): Modifying each file as it was supposed to be modified

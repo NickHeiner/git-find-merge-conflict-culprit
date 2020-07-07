@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 c9b4b79ee49fe0a14a234d869e041d60dc07434f Nick Heiner <nheiner@netflix.com> 1593637626 -0700	branch: Created from HEAD
+c9b4b79ee49fe0a14a234d869e041d60dc07434f c2d28f7a8c470e9c072a7b6e119950ab6b411cfc Nick Heiner <nheiner@netflix.com> 1593637630 -0700	cherry-pick: Making change on compare so it diverges from base
+c2d28f7a8c470e9c072a7b6e119950ab6b411cfc 83e7d47dc285e7dd6bebbd32259ab74b60847aae Nick Heiner <nheiner@netflix.com> 1593637652 -0700	commit: Modifying file that will be renamed on base
+83e7d47dc285e7dd6bebbd32259ab74b60847aae 16506ab1d8cd10283f8e0a31da74e886fc60243e Nick Heiner <nheiner@netflix.com> 1593638008 -0700	merge base: Merge made by the 'ours' strategy.

@@ -1,0 +1,15 @@
+Modifying each file as it was supposed to be modified
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# Date:      Wed Jul 1 13:55:10 2020 -0700
+#
+# On branch base
+# Changes to be committed:
+#	new file:   added.txt
+#	renamed:    rename-on-base-but-not-compare.txt -> renamed-on-base-but-not-compare.txt
+#	renamed:    to-rename.txt -> renamed.txt
+#	deleted:    to-delete.txt
+#	modified:   to-modify.txt
+#
