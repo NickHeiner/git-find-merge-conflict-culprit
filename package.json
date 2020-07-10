@@ -1,6 +1,6 @@
 {
-  "name": "git-find-merge-conflict-culprit",
-  "private": true,
+  "name": "nth-git-tools",
+  "version": "1.0.0",
   "scripts": {
     "test": "jest",
     "lint": "eslint --cache *.js __tests__",
