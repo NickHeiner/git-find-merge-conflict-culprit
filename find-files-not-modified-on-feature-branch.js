@@ -83,6 +83,11 @@ async function main() {
       default: [],
       type: 'array'
     })
+    .option('moveFiles', {
+      describe: 'If true, move files to rectify erroneous differences.',
+      default: true,
+      type: 'boolean'
+    })
     .option('logFilesToCheckAndStop', {
       describe: 'Log files to check, then stop. Implies `dry`.',
       default: false,
@@ -99,6 +104,12 @@ async function main() {
       default: true,
       type: 'boolean'
     });
+
+  const filesThatAreBothIncludedAndExcluded = _.intersection(argv.includeFiles, argv.excludeFiles);
+  if (filesThatAreBothIncludedAndExcluded.length) {
+    log.warn({filesThatAreBothIncludedAndExcluded}, 'Config error: a file cannot be both included and excluded.');
+    process.exit(1);
+  }
 
   const promiseLimit = pLimit(argv.concurrentGitProcesses);
 
@@ -155,10 +166,12 @@ async function main() {
     if (filesThatOnlyExistOnCompareBranchButWereNotModifiedThere.length) {
       await execGit('rm', ...filesThatOnlyExistOnCompareBranchButWereNotModifiedThere);
     }
-    await pSeries(toMove.map(({nameOnBase, nameOnCompare}) => async () => {
-      await makeDir(path.dirname(nameOnBase));
-      return execGit('mv', nameOnCompare, nameOnBase);
-    }));
+    if (argv.moveFiles) {
+      await pSeries(toMove.map(({nameOnBase, nameOnCompare}) => async () => {
+        await makeDir(path.dirname(nameOnBase));
+        return execGit('mv', nameOnCompare, nameOnBase);
+      }));
+    }
   }
 
   async function findErroneouslyModifiedFiles() {
