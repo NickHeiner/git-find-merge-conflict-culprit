@@ -2,13 +2,14 @@
   "name": "nth-git-tools",
   "version": "1.1.0",
   "scripts": {
-    "test": "jest",
+    "test": "yarn run lint && jest",
     "lint": "eslint --cache *.js __tests__",
     "lint:fix": "yarn run lint --fix"
   },
   "dependencies": {
     "bunyan": "^1.8.12",
     "bunyan-format": "^0.2.1",
+    "chalk": "4.1.0",
     "execa": "^4.0.0",
     "hard-rejection": "^2.1.0",
     "lodash": "^4.17.15",
