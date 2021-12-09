@@ -20,12 +20,22 @@ const {argv} = yargs(process.argv)
       type: 'string',
       description: 'If provided, a date to pass to `git rev-list --since`.' +
         'See the format required in https://git-scm.com/docs/git-rev-list.'
+    },
+    commitLimit: {
+      alias: 's',
+      type: 'number',
+      default: Infinity,
+      description: 'Use at most this many commits. ' +
+        'If there are more commits than this number, randomly sample (while preserving order) to limit it to ' +
+        "this number. This is useful when you have a big repo with many commits, and you don't need fine-granularity."
     }
   })
   .strict();
 
+const repoDir = argv.repo;
+
 async function queryFileExtensionCount(gitRef) {
-  const trackedFiles = (await execa('git', ['ls-tree', '-r', '--name-only', gitRef])).stdout.split('\n');
+  const trackedFiles = (await execa('git', ['ls-tree', '-r', '--name-only', gitRef], {cwd: repoDir})).stdout.split('\n');
 
   const countMatchingRegex = regex => trackedFiles.filter(filePath => regex.test(filePath)).length;
 
@@ -42,15 +52,27 @@ async function queryFileExtensionCount(gitRef) {
 }
 
 async function runQuery() {
+  // --reverse lists the oldest commits first.
   const revListArgs = ['rev-list', '--reverse'];
   if (argv.sinceDate) {
     revListArgs.push(`--since=${argv.sinceDate}`);
   }
   revListArgs.push('HEAD');
-  const {stdout: revListResult} = await execa('git', revListArgs);
+  const {stdout: revListResult} = await execa('git', revListArgs, {cwd: repoDir});
   const commits = revListResult.split('\n');
 
-  return Promise.all(commits.map(async commit => ({
+  let limitedCommits = commits;
+  if (argv.commitLimit !== Infinity) {
+    const mod = Math.floor(commits.length / argv.commitLimit);
+    limitedCommits = commits.reduce((acc, el, index) => {
+      if (!(index % mod)) {
+        return [...acc, el];
+      }
+      return acc;
+    }, []);
+  }
+
+  return Promise.all(limitedCommits.map(async commit => ({
     commit,
     ...(await queryFileExtensionCount(commit))
   })));
