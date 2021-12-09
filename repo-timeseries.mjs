@@ -74,6 +74,11 @@ async function runQuery() {
 
   return Promise.all(limitedCommits.map(async commit => ({
     commit,
+    date: (await execa(
+      'git', 
+      ['show', commit, '--no-patch', '--no-notes', '--pretty="%cd', '--date=short'], 
+      {cwd: repoDir})
+    ).stdout,
     ...(await queryFileExtensionCount(commit))
   })));
 }
