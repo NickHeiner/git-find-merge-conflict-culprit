@@ -3,18 +3,19 @@
   "version": "1.1.1",
   "scripts": {
     "test": "yarn run lint && jest",
-    "lint": "eslint --cache *.js __tests__",
+    "lint": "eslint --cache *.js *.mjs __tests__",
     "lint:fix": "yarn run lint --fix"
   },
   "dependencies": {
     "bunyan": "^1.8.12",
     "bunyan-format": "^0.2.1",
     "chalk": "4.1.0",
+    "csv-stringify": "6.0.4",
     "execa": "^4.0.0",
     "hard-rejection": "^2.1.0",
     "lodash": "^4.17.15",
     "make-dir": "^3.1.0",
-    "nth-log": "^1.1.0",
+    "nth-log": "2.0.3",
     "p-filter": "^2.1.0",
     "p-limit": "^3.0.1",
     "p-props": "^4.0.0",
@@ -24,6 +25,9 @@
     "yargs": "^15.3.1"
   },
   "eslintConfig": {
+    "parserOptions": {
+      "sourceType": "module"
+    },
     "env": {
       "es6": true,
       "node": true

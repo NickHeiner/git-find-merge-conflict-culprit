@@ -549,6 +549,13 @@
   dependencies:
     "@babel/types" "^7.3.0"
 
+"@types/bunyan@^1.8.6":
+  version "1.8.8"
+  resolved "https://artifacts.netflix.net/api/npm/npm-netflix/@types/bunyan/-/bunyan-1.8.8.tgz#8d6d33f090f37c07e2a80af30ae728450a101008"
+  integrity sha1-jW0z8JDzfAfiqArzCucoRQoQEAg=
+  dependencies:
+    "@types/node" "*"
+
 "@types/color-name@^1.1.1":
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/@types/color-name/-/color-name-1.1.1.tgz#1c1261bbeaa10a8055bbc5d8ab84b7b2afc846a0"
@@ -1336,6 +1343,11 @@ cssstyle@^2.0.0:
   integrity sha512-AZL67abkUzIuvcHqk7c09cezpGNcxUxU4Ioi/05xHk4DQeTkWmGYftIE6ctU6AEt+Gn4n1lDStOtj7FKycP71A==
   dependencies:
     cssom "~0.3.6"
+
+csv-stringify@6.0.4:
+  version "6.0.4"
+  resolved "https://artifacts.netflix.net/api/npm/npm-netflix/csv-stringify/-/csv-stringify-6.0.4.tgz#8c1656fef2aa05c2ccf7401240d177944a08479e"
+  integrity sha1-jBZW/vKqBcLM90ASQNF3lEoIR54=
 
 damerau-levenshtein@^1.0.6:
   version "1.0.6"
@@ -3254,6 +3266,11 @@ lodash@^4.17.10, lodash@^4.17.14, lodash@^4.17.15, lodash@^4.17.19:
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.20.tgz#b44a9b6297bcb698f1c51a3545a2b3b368d59c52"
   integrity sha512-PlhdFcillOINfeV7Ni6oF1TAEayyZBoZ8bcshTHqOYJYlrqzRK5hagpagky5o4HfCzzd1TRkXPMFq6cKk9rGmA==
 
+lodash@^4.17.20:
+  version "4.17.21"
+  resolved "https://artifacts.netflix.net/api/npm/npm-netflix/lodash/-/lodash-4.17.21.tgz#679591c564c3bffaae8454cf0b3df370c3d6911c"
+  integrity sha1-Z5WRxWTDv/quhFTPCz3zcMPWkRw=
+
 lolex@^5.0.0:
   version "5.1.2"
   resolved "https://registry.yarnpkg.com/lolex/-/lolex-5.1.2.tgz#953694d098ce7c07bc5ed6d0e42bc6c0c6d5a367"
@@ -3503,14 +3520,15 @@ npm-run-path@^4.0.0:
   dependencies:
     path-key "^3.0.0"
 
-nth-log@^1.1.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/nth-log/-/nth-log-1.1.0.tgz#519c34b40abe5566f1868aaea550b6c49c8ee406"
-  integrity sha512-RdwKP/VRW3XtNO+jD43iVSLDZim+olQ96dfLhmMGmCFNv2iAPkbKe6Eoe+BuwlcLQJfocDWQ4IZspnBt8jnGJw==
+nth-log@2.0.3:
+  version "2.0.3"
+  resolved "https://artifacts.netflix.net/api/npm/npm-netflix/nth-log/-/nth-log-2.0.3.tgz#5f1c2ba9f784bfcab399001dbae1a9dd9f5d95b8"
+  integrity sha1-XxwrqfeEv8qzmQAduuGp3Z9dlbg=
   dependencies:
+    "@types/bunyan" "^1.8.6"
     bunyan "^1.8.12"
     bunyan-format "^0.2.1"
-    lodash "^4.17.15"
+    lodash "^4.17.20"
     pretty-ms "^5.1.0"
 
 nwsapi@^2.2.0:
