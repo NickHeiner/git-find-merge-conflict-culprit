@@ -21,7 +21,8 @@ const {argv} = yargs(process.argv)
       description: 'If provided, a date to pass to `git rev-list --since`.' +
         'See the format required in https://git-scm.com/docs/git-rev-list.'
     }
-  });
+  })
+  .strict();
 
 async function queryFileExtensionCount(gitRef) {
   const trackedFiles = (await execa('git', ['ls-tree', '-r', '--name-only', gitRef])).stdout.split('\n');
