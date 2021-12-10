@@ -35,7 +35,8 @@ const {argv} = yargs(process.argv)
 const repoDir = argv.repo;
 
 async function queryFileExtensionCount(gitRef) {
-  const trackedFiles = (await execa('git', ['ls-tree', '-r', '--name-only', gitRef], {cwd: repoDir})).stdout.split('\n');
+  const trackedFiles = 
+    (await execa('git', ['ls-tree', '-r', '--name-only', gitRef], {cwd: repoDir})).stdout.split('\n');
 
   const countMatchingRegex = regex => trackedFiles.filter(filePath => regex.test(filePath)).length;
 
@@ -44,10 +45,36 @@ async function queryFileExtensionCount(gitRef) {
 
   log.debug({gitRef, trackedFiles, countJsFiles, countTsFiles}, 'ls-tree');
 
+  const countCombined = countJsFiles + countTsFiles;
+
   return {
     countJsFiles,
     countTsFiles,
-    countCombined: countJsFiles + countTsFiles
+    countCombined,
+    portionJsFiles: countJsFiles / countCombined,
+    portionTsFiles: countTsFiles / countCombined,
+  };
+}
+
+// I don't know if this will handle renames.
+async function queryFilesAdded(gitRef) {
+  const allFiles = (
+    await execa('git', ['diff', '--name-status', `${gitRef}~1..${gitRef}`], {cwd: repoDir})
+  ).stdout.split('\n');
+  const addedFiles = allFiles.filter(line => line.startsWith('A'));
+
+  const countMatchingRegex = regex => addedFiles.filter(filePath => regex.test(filePath)).length;
+
+  const countAddedJsFiles = countMatchingRegex(/\.js$/);
+  const countAddedTsFiles = countMatchingRegex(/\.tsx?$/);
+  const countCombinedAddedFiles = countAddedJsFiles + countAddedTsFiles;
+
+  return {
+    countAddedJsFiles,
+    countAddedTsFiles,
+    countCombinedAddedFiles,
+    portionAddedJsFiles: countCombinedAddedFiles === 0 ? 0 : countAddedJsFiles / countCombinedAddedFiles,
+    portionAddedTsFiles: countCombinedAddedFiles === 0 ? 0 : countAddedTsFiles / countCombinedAddedFiles
   };
 }
 
@@ -79,7 +106,8 @@ async function runQuery() {
       ['show', commit, '--no-patch', '--no-notes', '--pretty="%cd', '--date=short'], 
       {cwd: repoDir})
     ).stdout,
-    ...(await queryFileExtensionCount(commit))
+    ...(await queryFileExtensionCount(commit)),
+    ...(await queryFilesAdded(commit))
   })));
 }
 
